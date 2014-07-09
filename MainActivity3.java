@@ -2,40 +2,20 @@ package com.example.random;
 
 import java.io.BufferedReader;
 
-import java.io.BufferedInputStream;
-import java.io.IOException;
-import java.io.InputStream;
+
+
 import java.io.InputStreamReader;
-import java.io.OutputStream;
 import java.io.OutputStreamWriter;
 import java.io.PrintWriter;
-import java.io.UnsupportedEncodingException;
-import java.net.InetAddress;
-//import java.net.ServerSocket;
 import java.net.HttpURLConnection;
+import java.net.InetAddress;
 import java.net.Socket;
 import java.net.URL;
 import java.net.URLConnection;
-import java.net.UnknownHostException;
-
-import org.apache.http.HttpEntity;
-import org.apache.http.HttpResponse;
-import org.apache.http.client.ClientProtocolException;
-import org.apache.http.client.HttpClient;
-import org.apache.http.client.methods.HttpPost;
-import org.apache.http.entity.StringEntity;
-import org.apache.http.impl.client.DefaultHttpClient;
-import org.apache.http.util.EntityUtils;
-
-
-
-
-
-
-
 import android.os.AsyncTask;
 import android.os.Bundle;
 import android.app.Activity;
+import android.telephony.TelephonyManager;
 import android.util.Base64;
 import android.view.Menu;
 import android.view.View;
@@ -47,132 +27,146 @@ import android.view.View.OnClickListener;
 
 public class MainActivity3 extends Activity {
 
-	private String base64,message,number,str;
-	private InetAddress LocalIP;
-
+	private String base64, message, message2,imei,str;
+	
 	@Override
 	protected void onCreate(Bundle savedInstanceState) {
 		super.onCreate(savedInstanceState);
 		setContentView(R.layout.activity_main_activity3);
-		Button button=(Button)findViewById(R.id.button1);
-		button.setOnClickListener(new OnClickListener(){
-			public void onClick(View v)
-			{
-				
-		     SendIP sip=new SendIP();
-		     sip.execute();
-		     
-			}		
+		
+
+				SendIP sip = new SendIP();
+				sip.execute();
+				Button button = (Button) findViewById(R.id.button1);
+				button.setOnClickListener(new OnClickListener() {
+					public void onClick(View v) {
+						Sendbase64 s=new Sendbase64();
+						s.execute();
+
+			}
 		});
+		
 	}
 	
-	
-	private class SendIP extends AsyncTask<Void, Void, String>
-	{
-		EditText et; 
-		/*Integer value;*/
+
+	private class SendIP extends AsyncTask<Void, Void, String> {
+		EditText et;
 		
-		protected String doInBackground(Void... params) 
-		{
-			/*HttpClient client = new DefaultHttpClient();
-			HttpPost post = new HttpPost("http://localhost:9080/New/MyServlet");
-			HttpEntity entity = null;
-			StringBuffer sb = new StringBuffer();
+		protected String doInBackground(Void... params) {
+			
+			
 			try {
-				entity = new StringEntity("hello server");
-				post.setEntity(entity);
-				HttpResponse response = client.execute(post);
-				InputStream is = response.getEntity().getContent();
-				InputStreamReader r = new InputStreamReader(is);
-				BufferedReader br = new BufferedReader(r);
-				String line = null;
-				while(br.readLine() != null){
-					sb.append(line);
-				}
-			} catch (UnsupportedEncodingException e) {
-				e.printStackTrace();
-			} catch (ClientProtocolException e) {
-				e.printStackTrace();
-			} catch (IOException e) {
-				e.printStackTrace();
-			}
-			String string = new String(sb);
-			return string;
-			*/
-			
-			try
-			{
+
+				URL url = new URL("http://10.0.2.2:8080/New/MyServlet");
+				URLConnection urlconnection = url.openConnection();
 				
-				 URL url = new URL("http://localhost:9080/New/MyServlet");
-                 URLConnection connection = url.openConnection();
-                 
-                
-                 connection.setDoInput(true);
-                 connection.setDoOutput(true);
-                 
-                
-                 
-                 
-					et = (EditText) findViewById(R.id.editText1);
-					number = et.getText().toString();
-					OutputStreamWriter out=new OutputStreamWriter(connection.getOutputStream());
-			       //out.write(message);
-			       out.write(number+"\n");//sending mobile no. to server
-			       out.flush();
-			       //out.close();
-			     
-			       BufferedReader in=new BufferedReader(new InputStreamReader (connection.getInputStream()));
-			       message=in.readLine();
-			       str=in.readLine();//reading the string sent by server
+				
+				urlconnection.setDoInput(true);
+				urlconnection.setDoOutput(true);
+				//et = (EditText) findViewById(R.id.editText1);
+				//number = et.getText().toString();
+				
+				
+		    OutputStreamWriter out = new OutputStreamWriter(urlconnection.getOutputStream());
+		    TelephonyManager tm = (TelephonyManager) getSystemService(TELEPHONY_SERVICE);
+		
+		       imei = tm.getDeviceId();
+			
+				out.write(imei+ "\n");// sending mobile no. to server
+				out.flush();
+				out.close();
+				
+				//out.close();
+			
+			
 
-			       //in.close();
-			       byte[]data=str.getBytes("UTF-8");
-			       base64=Base64.encodeToString(data, Base64.DEFAULT);//encoding the string into base64
-			       //OutputStreamWriter out1=new OutputStreamWriter(connection.getOutputStream());
-			       out.write(base64+"\n");
-			       out.flush();//sending the encoded string to server
-			       out.close();
-			       //out.close();
-			      
-			      
-			       
-			       
-			       
-			    
-			}
-			catch(Exception e)
-			{
+				BufferedReader in = new BufferedReader(new InputStreamReader(urlconnection.getInputStream()));
+				message = in.readLine();
+				str = in.readLine();// reading the string sent by server
+			
+				 in.close();
+				
+
+				
+			
+				
+				
+				/*out1.write(base64 + "\n");
+				out1.flush();// sending the encoded string to server
+				out1.close();
+				*/
+			
+			
+				// out.close();
+
+			} catch (Exception e) {
 				e.printStackTrace();
 			}
-			return message;
+			return str;
 			
-		     
-		
-		
-	     
-	}
-	
-	protected void onPostExecute(String result)
-	{
 
-		
-		Toast.makeText(MainActivity3.this, result, Toast.LENGTH_LONG).show();
-		et = (EditText) findViewById(R.id.editText1);
-		et.setText("");
-	}
-	
-	
-	}
-	
+		}
 
+		protected void onPostExecute(String result) {
 
-	
+			Toast.makeText(MainActivity3.this, result, Toast.LENGTH_LONG)
+					.show();
+			et = (EditText) findViewById(R.id.editText1);
+			et.setText("");
+		}
+
+	}
 
 	@Override
+	
 	public boolean onCreateOptionsMenu(Menu menu) {
 		// Inflate the menu; this adds items to the action bar if it is present.
 		getMenuInflater().inflate(R.menu.main_activity3, menu);
 		return true;
 	}
-
+	private class Sendbase64 extends AsyncTask<Void, Void, String> 
+	{
+		protected String doInBackground(Void... params)
+		{
+	
+		try
+		{
+		URL url1=new URL("http://10.0.2.2:8080/Base64/Servlet1");
+		URLConnection urlconnection=url1.openConnection();
+		
+		//HttpURLConnection httpconnection=(HttpURLConnection)urlconnection;
+		//httpconnection.setRequestMethod("POST");
+		//httpconnection.connect();
+		
+		
+		urlconnection.setDoOutput(true);
+		urlconnection.setDoInput(true);
+		
+		byte[] data = str.getBytes("UTF-8");
+		base64 = Base64.encodeToString(data, Base64.DEFAULT);
+		
+		OutputStreamWriter out1=new OutputStreamWriter(urlconnection.getOutputStream());
+		out1.write(base64+"\n");
+		out1.flush();
+		out1.close();
+		BufferedReader in = new BufferedReader(new InputStreamReader(urlconnection.getInputStream()));
+		message2 = in.readLine();
+		System.out.println(message2);
+		//httpconnection.disconnect();
+		//Toast.makeText(getApplicationContext(), message2, Toast.LENGTH_SHORT).show();
+	}
+		catch(Exception e)
+		{
+			e.printStackTrace();
+		}
+		return message2;
+	}
+		protected void onPostExecute(String result)
+		{
+			Toast.makeText(getApplicationContext(),result, Toast.LENGTH_SHORT).show();
+		}
+		
+	}
 }
+
+
