@@ -2,16 +2,20 @@ package com.example.random;
 
 import java.io.BufferedReader;
 
-
-
 import java.io.InputStreamReader;
 import java.io.OutputStreamWriter;
-import java.io.PrintWriter;
-import java.net.HttpURLConnection;
-import java.net.InetAddress;
-import java.net.Socket;
 import java.net.URL;
 import java.net.URLConnection;
+import java.security.KeyFactory;
+import java.security.KeyPair;
+import java.security.KeyPairGenerator;
+import java.security.PrivateKey;
+import java.security.PublicKey;
+import java.security.Signature;
+import java.security.spec.RSAPublicKeySpec;
+
+//import org.apache.commons.codec.binary.Base64;
+
 import android.os.AsyncTask;
 import android.os.Bundle;
 import android.app.Activity;
@@ -27,83 +31,65 @@ import android.view.View.OnClickListener;
 
 public class MainActivity3 extends Activity {
 
-	private String base64, message, message2,imei,str;
-	
+	private String base64 = null;
+	private String message = null;
+	private String message2 = null;
+	private String str = null;
+	private String publickey = null;
+	private String imei = null;
+
 	@Override
 	protected void onCreate(Bundle savedInstanceState) {
 		super.onCreate(savedInstanceState);
 		setContentView(R.layout.activity_main_activity3);
-		
 
-				SendIP sip = new SendIP();
-				sip.execute();
-				Button button = (Button) findViewById(R.id.button1);
-				button.setOnClickListener(new OnClickListener() {
-					public void onClick(View v) {
-						Sendbase64 s=new Sendbase64();
-						s.execute();
+		SendIP sip = new SendIP();
+		sip.execute();
+		Button button = (Button) findViewById(R.id.button1);
+		button.setOnClickListener(new OnClickListener() {
+			public void onClick(View v) {
+				Sendbase64 s = new Sendbase64();
+				s.execute();
 
 			}
 		});
-		
+
 	}
-	
 
 	private class SendIP extends AsyncTask<Void, Void, String> {
 		EditText et;
-		
+
 		protected String doInBackground(Void... params) {
-			
-			
+
 			try {
 
-				URL url = new URL("http://10.0.2.2:8080/New/MyServlet");
+				URL url = new URL("http://10.210.8.168:8080/New/MyServlet");
 				URLConnection urlconnection = url.openConnection();
-				
-				
+
 				urlconnection.setDoInput(true);
 				urlconnection.setDoOutput(true);
-				//et = (EditText) findViewById(R.id.editText1);
-				//number = et.getText().toString();
-				
-				
-		    OutputStreamWriter out = new OutputStreamWriter(urlconnection.getOutputStream());
-		    TelephonyManager tm = (TelephonyManager) getSystemService(TELEPHONY_SERVICE);
-		
-		       imei = tm.getDeviceId();
-			
-				out.write(imei+ "\n");// sending mobile no. to server
+
+				OutputStreamWriter out = new OutputStreamWriter(
+						urlconnection.getOutputStream());
+				TelephonyManager tm = (TelephonyManager) getSystemService(TELEPHONY_SERVICE);
+
+				imei = tm.getDeviceId();
+
+				out.write(imei + "\n");// sending mobile no. to server
 				out.flush();
 				out.close();
-				
-				//out.close();
-			
-			
 
-				BufferedReader in = new BufferedReader(new InputStreamReader(urlconnection.getInputStream()));
+				BufferedReader in = new BufferedReader(new InputStreamReader(
+						urlconnection.getInputStream()));
 				message = in.readLine();
 				str = in.readLine();// reading the string sent by server
-			
-				 in.close();
-				
-
-				
-			
-				
-				
-				/*out1.write(base64 + "\n");
-				out1.flush();// sending the encoded string to server
-				out1.close();
-				*/
-			
-			
-				// out.close();
+System.out.println(str);
+				in.close();
 
 			} catch (Exception e) {
 				e.printStackTrace();
 			}
-			return str;
-			
+			return message;
 
 		}
 
@@ -111,62 +97,92 @@ public class MainActivity3 extends Activity {
 
 			Toast.makeText(MainActivity3.this, result, Toast.LENGTH_LONG)
 					.show();
-			et = (EditText) findViewById(R.id.editText1);
-			et.setText("");
+
 		}
 
 	}
 
 	@Override
-	
 	public boolean onCreateOptionsMenu(Menu menu) {
 		// Inflate the menu; this adds items to the action bar if it is present.
 		getMenuInflater().inflate(R.menu.main_activity3, menu);
 		return true;
 	}
-	private class Sendbase64 extends AsyncTask<Void, Void, String> 
-	{
-		protected String doInBackground(Void... params)
-		{
-	
-		try
-		{
-		URL url1=new URL("http://10.0.2.2:8080/Base64/Servlet1");
-		URLConnection urlconnection=url1.openConnection();
-		
-		//HttpURLConnection httpconnection=(HttpURLConnection)urlconnection;
-		//httpconnection.setRequestMethod("POST");
-		//httpconnection.connect();
-		
-		
-		urlconnection.setDoOutput(true);
-		urlconnection.setDoInput(true);
-		
-		byte[] data = str.getBytes("UTF-8");
-		base64 = Base64.encodeToString(data, Base64.DEFAULT);
-		
-		OutputStreamWriter out1=new OutputStreamWriter(urlconnection.getOutputStream());
-		out1.write(base64+"\n");
-		out1.flush();
-		out1.close();
-		BufferedReader in = new BufferedReader(new InputStreamReader(urlconnection.getInputStream()));
-		message2 = in.readLine();
-		System.out.println(message2);
-		//httpconnection.disconnect();
-		//Toast.makeText(getApplicationContext(), message2, Toast.LENGTH_SHORT).show();
-	}
-		catch(Exception e)
-		{
-			e.printStackTrace();
+
+	private class Sendbase64 extends AsyncTask<Void, Void, String> {
+		protected String doInBackground(Void... params) {
+
+			try {
+				URL url1 = new URL("http://10.210.8.168:8080/Base64/Servlet1");
+				URLConnection urlconnection = url1.openConnection();
+
+				urlconnection.setDoOutput(true);
+				urlconnection.setDoInput(true);
+				KeyPairGenerator kpg = KeyPairGenerator.getInstance("RSA");// returns
+																			// a
+																			// keypair
+																			// generator
+																			// object
+																			// that
+																			// generates
+																			// public/private
+																			// key
+																			// pair
+																			// for
+																			// the
+																			// specified
+																			// algorithm
+				kpg.initialize(1024);
+				KeyPair kp = kpg.generateKeyPair();
+				PrivateKey priKey = kp.getPrivate();
+				PublicKey pubKey = kp.getPublic();
+				KeyFactory keyFactory = KeyFactory.getInstance("RSA");
+				RSAPublicKeySpec publicKeySpec = keyFactory.getKeySpec(pubKey,
+						RSAPublicKeySpec.class);
+				Signature instance = Signature.getInstance("SHA1withRSA");
+				instance.initSign(priKey);// initialize this object for signing
+				instance.update(str.getBytes());// updates the data to be signed
+												// or verified,using the
+												// specified array of bytes
+				// System.out.println("public key"+pubKey.toString());
+
+				byte[] signature = instance.sign();
+
+				/*
+				 * byte[] data = str.getBytes("UTF-8"); base64 =
+				 * Base64.encodeToString(data, Base64.DEFAULT);
+				 */
+
+				//base64 =Base64.encodeBase64String(signature);// signed data
+				base64=Base64.encodeToString(signature, Base64.DEFAULT);
+				byte[] publickeybytes = pubKey.getEncoded();
+				publickey = Base64.encodeToString(publickeybytes,Base64.DEFAULT);
+				OutputStreamWriter out1 = new OutputStreamWriter(
+						urlconnection.getOutputStream());
+				String combinedString = base64 + " " + publickey + " " +str;
+				out1.write(combinedString);
+				//System.out.println(base64);
+				//out1.write(publickey);
+				System.out.println(combinedString);
+				//out1.write(str + "\n");
+				//System.out.println(str);
+
+				out1.flush();
+				out1.close();
+				BufferedReader in = new BufferedReader(new InputStreamReader(
+						urlconnection.getInputStream()));
+				message2 = in.readLine();
+
+			} catch (Exception e) {
+				e.printStackTrace();
+			}
+			return message2;
 		}
-		return message2;
-	}
-		protected void onPostExecute(String result)
-		{
-			Toast.makeText(getApplicationContext(),result, Toast.LENGTH_SHORT).show();
+
+		protected void onPostExecute(String result) {
+			Toast.makeText(getApplicationContext(), result, Toast.LENGTH_SHORT)
+					.show();
 		}
-		
+
 	}
 }
-
-
