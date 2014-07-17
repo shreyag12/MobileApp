@@ -2,6 +2,7 @@ package com.example.random;
 
 import java.io.BufferedReader;
 
+
 import java.io.InputStreamReader;
 import java.io.OutputStreamWriter;
 import java.net.URL;
@@ -12,7 +13,7 @@ import java.security.KeyPairGenerator;
 import java.security.PrivateKey;
 import java.security.PublicKey;
 import java.security.Signature;
-import java.security.spec.RSAPublicKeySpec;
+import com.google.gson.Gson;
 
 //import org.apache.commons.codec.binary.Base64;
 
@@ -20,22 +21,17 @@ import android.os.AsyncTask;
 import android.os.Bundle;
 import android.app.Activity;
 import android.telephony.TelephonyManager;
-import android.util.Base64;
 import android.view.Menu;
 import android.view.View;
 import android.widget.Button;
-import android.widget.EditText;
-
 import android.widget.Toast;
 import android.view.View.OnClickListener;
 
 public class MainActivity3 extends Activity {
 
-	private String base64 = null;
 	private String message = null;
 	private String message2 = null;
 	private String str = null;
-	private String publickey = null;
 	private String imei = null;
 
 	@Override
@@ -57,8 +53,6 @@ public class MainActivity3 extends Activity {
 	}
 
 	private class SendIP extends AsyncTask<Void, Void, String> {
-		EditText et;
-
 		protected String doInBackground(Void... params) {
 
 			try {
@@ -83,7 +77,7 @@ public class MainActivity3 extends Activity {
 						urlconnection.getInputStream()));
 				message = in.readLine();
 				str = in.readLine();// reading the string sent by server
-System.out.println(str);
+                 System.out.println(str);
 				in.close();
 
 			} catch (Exception e) {
@@ -136,37 +130,32 @@ System.out.println(str);
 				KeyPair kp = kpg.generateKeyPair();
 				PrivateKey priKey = kp.getPrivate();
 				PublicKey pubKey = kp.getPublic();
-				KeyFactory keyFactory = KeyFactory.getInstance("RSA");
-				RSAPublicKeySpec publicKeySpec = keyFactory.getKeySpec(pubKey,
-						RSAPublicKeySpec.class);
 				Signature instance = Signature.getInstance("SHA1withRSA");
 				instance.initSign(priKey);// initialize this object for signing
 				instance.update(str.getBytes());// updates the data to be signed
 												// or verified,using the
 												// specified array of bytes
-				// System.out.println("public key"+pubKey.toString());
-
+				
 				byte[] signature = instance.sign();
 
-				/*
-				 * byte[] data = str.getBytes("UTF-8"); base64 =
-				 * Base64.encodeToString(data, Base64.DEFAULT);
-				 */
+				
 
-				//base64 =Base64.encodeBase64String(signature);// signed data
-				base64=Base64.encodeToString(signature, Base64.DEFAULT);
+				
 				byte[] publickeybytes = pubKey.getEncoded();
-				publickey = Base64.encodeToString(publickeybytes,Base64.DEFAULT);
+				
+				MyEntity obj=new MyEntity();
+				obj.setStr(str);
+				obj.setPublickeybytes(publickeybytes);
+				obj.setSignature(signature);
+				Gson gson=new Gson();
+				String json=gson.toJson(obj);
 				OutputStreamWriter out1 = new OutputStreamWriter(
 						urlconnection.getOutputStream());
-				String combinedString = base64 + " " + publickey + " " +str;
-				out1.write(combinedString);
-				//System.out.println(base64);
-				//out1.write(publickey);
-				System.out.println(combinedString);
-				//out1.write(str + "\n");
-				//System.out.println(str);
-
+				out1.write(json);
+				
+				System.out.println(str);
+				System.out.println(new String(signature));
+				System.out.println(new String(publickeybytes));
 				out1.flush();
 				out1.close();
 				BufferedReader in = new BufferedReader(new InputStreamReader(
@@ -185,4 +174,6 @@ System.out.println(str);
 		}
 
 	}
-}
+
+	}
+

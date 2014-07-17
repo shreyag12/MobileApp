@@ -1,6 +1,7 @@
 package Servlet1;
 
 import java.io.BufferedReader;
+
 import java.io.IOException;
 import java.io.OutputStreamWriter;
 import java.security.InvalidKeyException;
@@ -13,13 +14,12 @@ import java.security.spec.InvalidKeySpecException;
 import java.security.spec.X509EncodedKeySpec;
 
 import javax.servlet.ServletException;
-import javax.servlet.ServletInputStream;
 import javax.servlet.annotation.WebServlet;
 import javax.servlet.http.HttpServlet;
 import javax.servlet.http.HttpServletRequest;
 import javax.servlet.http.HttpServletResponse;
 
-import org.apache.commons.codec.binary.Base64;
+import com.google.gson.Gson;
 
 ;
 
@@ -30,12 +30,7 @@ import org.apache.commons.codec.binary.Base64;
 public class Servlet1 extends HttpServlet {
 	private static final long serialVersionUID = 1L;
 
-	/**
-	 * Default constructor.
-	 */
-	private String publicKey = null;
-	private String sign = null;
-	private String originalString = null;
+	private String receivedstring = null;
 	boolean result = false;
 	
 	public Servlet1() {
@@ -58,7 +53,6 @@ public class Servlet1 extends HttpServlet {
 	 * @see HttpServlet#doPost(HttpServletRequest request, HttpServletResponse
 	 *      response)
 	 */
-	@SuppressWarnings("static-access")
 	public boolean verify(byte[] sign, byte[] pubkey) {
 
 		KeyFactory keyFact = null;
@@ -71,7 +65,7 @@ public class Servlet1 extends HttpServlet {
 			PublicKey generatedPublicKey = keyFact.generatePublic(x509KeySpec);
 			sig = Signature.getInstance("SHA1withRSA");
 			sig.initVerify(generatedPublicKey);
-			sig.update(originalString.getBytes());
+			sig.update(receivedstring.getBytes());
 			isVerified = sig.verify(sign);
 		} catch (NoSuchAlgorithmException e) {
 			// TODO Auto-generated catch block
@@ -94,41 +88,32 @@ public class Servlet1 extends HttpServlet {
 		// TODO Auto-generated method stub
 		try {
 			
-			StringBuffer buffer = new StringBuffer();
-			BufferedReader reader = request.getReader();
-			String line = null;
-			while((line = reader.readLine()) != null){
-				buffer.append(line);
-			}
-			String receivedstring = new String(buffer);
-			
-			System.out.println(receivedstring);
-			String[] combinedString = receivedstring.split(" ");
-			sign = combinedString[0];
-			publicKey = combinedString[1];
-			originalString = combinedString[2];
-			
-			System.out.println("Sign:- "+sign);
-			System.out.println("Public key:- "+publicKey);
-			System.out.println("Original String:- "+originalString);
-
-			byte[] signBytes = Base64.decodeBase64(sign);
-			byte[] publicKeyBytes = Base64.decodeBase64(publicKey);
+			BufferedReader br=new BufferedReader(request.getReader());
+			Gson gson=new Gson();
+			MyEntity obj=gson.fromJson(br, MyEntity.class);
+			 receivedstring=obj.getStr();
+			 System.out.println(receivedstring);
+			byte[]signBytes=obj.getSignature();
+			System.out.println(new String(signBytes));
+			byte[]publicKeyBytes=obj.getPublickeybytes();
+			System.out.println(new String(publicKeyBytes));
 			result = verify(signBytes, publicKeyBytes);
-			if (result) {
-				System.out.println("Signature successfully validated");
-			} else {
-				System.out.println("error in validating signature");
-			}
 
 			OutputStreamWriter writer = new OutputStreamWriter(
 					response.getOutputStream());
-			writer.write("signature successfully validated" + "\n");
+			if (result) {
+				System.out.println("Signature successfully validated");
+				writer.write("signature successfully validated" + "\n");
+			} else {
+				System.out.println("error in validating signature");
+				writer.write("error in validating signature" + "\n");
+			}
+
+			
 			writer.flush();
 			writer.close();
 
 			response.setStatus(HttpServletResponse.SC_OK);
-			// sin.close();
 		} catch (IOException e) {
 			response.getWriter().println(e);
 		}
